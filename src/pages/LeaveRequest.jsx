@@ -41,10 +41,13 @@ const LeaveRequest = () => {
           'https://work-sync-gbf0h9d5amcxhwcr.canadacentral-01.azurewebsites.net/admin/api/leaves/pending',
           {
             params: { adminEmail },
-            headers: { Authorization: token }, // No Bearer prefix
+            headers: { Authorization: token },
           }
         );
-        setLeaveData(response.data);
+
+        // Filter data where role === 'SUBADMIN'
+        const subAdminData = response.data.filter((item) => item.role === 'SUBADMIN');
+        setLeaveData(subAdminData);
       } catch (err) {
         setError('Failed to fetch leave requests. Please try again later.');
       } finally {
@@ -71,7 +74,7 @@ const LeaveRequest = () => {
           leaveId,
           status: newStatus,
         },
-        { headers: { Authorization: token } } // No Bearer prefix
+        { headers: { Authorization: token } }
       );
 
       setLeaveData((prevData) =>
