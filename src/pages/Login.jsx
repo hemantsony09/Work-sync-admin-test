@@ -1,6 +1,16 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { Box, TextField, Button, Typography, Paper, Snackbar, Alert } from '@mui/material';
+import {
+  Box,
+  TextField,
+  Button,
+  Typography,
+  Paper,
+  Snackbar,
+  Alert,
+  Modal,
+} from '@mui/material';
+import { useNavigate } from 'react-router-dom'; // Import useNavigate
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -9,6 +19,10 @@ const Login = () => {
   const [success, setSuccess] = useState('');
   const [openErrorSnackbar, setOpenErrorSnackbar] = useState(false);
   const [openSuccessSnackbar, setOpenSuccessSnackbar] = useState(false);
+  const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+
+  const navigate = useNavigate(); // Initialize navigate
 
   const handleLogin = async (event) => {
     event.preventDefault();
@@ -22,29 +36,47 @@ const Login = () => {
         }
       );
 
-      // Handle successful login
       if (response.status === 200) {
         const { token } = response.data;
-
-        // Store token and email in localStorage
         localStorage.setItem('token', token);
         localStorage.setItem('email', email);
 
-        // Show success snackbar
         setSuccess('Login successful! Redirecting...');
         setOpenSuccessSnackbar(true);
 
-        // Redirect after a short delay
         setTimeout(() => {
-          window.location.href = '/admin/employee-details'; // Replace with your redirect path
+          window.location.href = '/admin/employee-details';
         }, 2000);
       }
     } catch (err) {
-      // Handle errors
       setError(
         err.response && err.response.data && err.response.data.message
           ? err.response.data.message
           : 'Login failed. Please try again.'
+      );
+      setOpenErrorSnackbar(true);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    try {
+      const response = await axios.post(
+        'https://work-sync-gbf0h9d5amcxhwcr.canadacentral-01.azurewebsites.net/admin/api/forgot-password',
+        {
+          email: resetEmail,
+        }
+      );
+
+      if (response.status === 200) {
+        setSuccess('Password reset link sent to your email!');
+        setOpenSuccessSnackbar(true);
+        setIsForgotPasswordOpen(false);
+      }
+    } catch (err) {
+      setError(
+        err.response && err.response.data && err.response.data.message
+          ? err.response.data.message
+          : 'Failed to send reset link. Please try again.'
       );
       setOpenErrorSnackbar(true);
     }
@@ -56,6 +88,14 @@ const Login = () => {
 
   const handleCloseSuccessSnackbar = () => {
     setOpenSuccessSnackbar(false);
+  };
+
+  const handleOpenForgotPassword = () => {
+    navigate('/admin/login/forgot'); // Redirect to /admin/login/forgot
+  };
+
+  const handleCloseForgotPassword = () => {
+    setIsForgotPasswordOpen(false);
   };
 
   return (
@@ -74,15 +114,14 @@ const Login = () => {
           textAlign: 'center',
         }}
       >
-        <Typography variant="h4" color='#383574' style={{fontWeight:'bold'}} gutterBottom>
-        Work Sync 
+        <Typography variant="h4" color="#383574" style={{ fontWeight: 'bold' }} gutterBottom>
+          Work Sync
         </Typography>
         <Typography variant="h4" gutterBottom>
-         Admin Login
+          Admin Login
         </Typography>
 
         <form onSubmit={handleLogin}>
-          {/* Email Input */}
           <TextField
             label="Email"
             type="email"
@@ -93,7 +132,6 @@ const Login = () => {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
-          {/* Password Input */}
           <TextField
             label="Password"
             type="password"
@@ -104,7 +142,6 @@ const Login = () => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
-          {/* Login Button */}
           <Button
             type="submit"
             variant="contained"
@@ -115,7 +152,60 @@ const Login = () => {
             Login
           </Button>
         </form>
+
+        {/* Forgot Password Button */}
+        <Button
+          variant="text"
+          color="primary"
+          onClick={handleOpenForgotPassword} // This will now redirect to /admin/login/forgot
+          sx={{ marginTop: 2 }}
+        >
+          Forgot Password?
+        </Button>
       </Paper>
+
+      {/* Forgot Password Modal */}
+      <Modal
+        open={isForgotPasswordOpen}
+        onClose={handleCloseForgotPassword}
+        aria-labelledby="forgot-password-modal"
+        aria-describedby="forgot-password-description"
+      >
+        <Paper
+          elevation={3}
+          sx={{
+            padding: 4,
+            width: 400,
+            margin: 'auto',
+            marginTop: '10%',
+            textAlign: 'center',
+          }}
+        >
+          <Typography variant="h6" gutterBottom>
+            Reset Password
+          </Typography>
+          <TextField
+            label="Email"
+            type="email"
+            variant="outlined"
+            fullWidth
+            required
+            margin="normal"
+            value={resetEmail}
+            onChange={(e) => setResetEmail(e.target.value)}
+          />
+          <Button
+            variant="contained"
+            color="primary"
+            fullWidth
+            sx={{ marginTop: 2 }}
+            onClick={handleForgotPassword}
+          >
+            Send Reset Link
+          </Button>
+        </Paper>
+      </Modal>
+
       {/* Error Snackbar */}
       <Snackbar
         open={openErrorSnackbar}
@@ -127,6 +217,7 @@ const Login = () => {
           {error}
         </Alert>
       </Snackbar>
+
       {/* Success Snackbar */}
       <Snackbar
         open={openSuccessSnackbar}

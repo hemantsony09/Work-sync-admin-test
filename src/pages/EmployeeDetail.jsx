@@ -174,13 +174,13 @@ const EmployeeDetails = () => {
                   <TableCell style={{ fontWeight: 'bold' }}>Email</TableCell>
                   <TableCell style={{ fontWeight: 'bold' }}>Role</TableCell>
                   <TableCell style={{ fontWeight: 'bold' }}>Joining Date</TableCell>
-                  <TableCell style={{ fontWeight: 'bold' }}>Actions</TableCell>
+                  <TableCell style={{ fontWeight: 'bold' }}>More</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {currentEmployees.map((employee) => (
+                {currentEmployees.map((employee,index) => (
                   <TableRow key={employee.id}>
-                    <TableCell>{employee.id}</TableCell>
+                    <TableCell>{index+1}</TableCell>
                     <TableCell>{employee.name}</TableCell>
                     <TableCell>{employee.email}</TableCell>
                     <TableCell>{employee.role}</TableCell>
@@ -229,10 +229,6 @@ const EmployeeDetails = () => {
       <TableContainer component={Paper}>
         <Table>
           <TableBody>
-            <TableRow>
-              <TableCell><strong>ID</strong></TableCell>
-              <TableCell>{selectedEmployee.id || 'Not Available'}</TableCell>
-            </TableRow>
             <TableRow>
               <TableCell><strong>Name</strong></TableCell>
               <TableCell>{selectedEmployee.name || 'Not Available'}</TableCell>

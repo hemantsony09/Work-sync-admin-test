@@ -177,9 +177,9 @@ const SubAdminLeave = () => {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  currentPageData.map((request) => (
+                  currentPageData.map((request,index) => (
                     <TableRow key={request.id}>
-                      <TableCell>{request.id}</TableCell>
+                      <TableCell>{index+1}</TableCell>
                       <TableCell>{request.name}</TableCell>
                       <TableCell>{request.leaveType}</TableCell>
                       <TableCell>{request.startDate}</TableCell>

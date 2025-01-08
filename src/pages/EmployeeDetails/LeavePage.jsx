@@ -189,9 +189,9 @@ const LeavePage = () => {
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredData.map((leave) => (
+                filteredData.map((leave,index) => (
                   <TableRow key={leave.id}>
-                    <TableCell>{leave.id}</TableCell>
+                    <TableCell>{index+1}</TableCell>
                     <TableCell>{leave.name}</TableCell>
                     <TableCell>{leave.leaveType}</TableCell>
                     <TableCell>{leave.reason}</TableCell>

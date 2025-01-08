@@ -17,6 +17,11 @@ import {
   FormControl,
   Box,
   TablePagination,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Button,
 } from '@mui/material';
 
 const Ticket = () => {
@@ -28,6 +33,10 @@ const Ticket = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [error, setError] = useState('');
+
+  // Dialog-related state
+  const [openDialog, setOpenDialog] = useState(false);
+  const [selectedTicket, setSelectedTicket] = useState(null);
 
   useEffect(() => {
     const fetchTickets = async () => {
@@ -46,7 +55,7 @@ const Ticket = () => {
         setTickets(response.data);
       } catch (err) {
         setError('Failed to fetch tickets. Please try again.');
-      }  finally {
+      } finally {
         setLoading(false);
         setSnackbarOpen(false);
       }
@@ -77,20 +86,31 @@ const Ticket = () => {
   const handleSnackbarClose = () => {
     setSnackbarOpen(false);
   };
-  if(loading){
-    return(
+
+  const handleOpenDialog = (ticket) => {
+    setSelectedTicket(ticket);
+    setOpenDialog(true);
+  };
+
+  const handleCloseDialog = () => {
+    setOpenDialog(false);
+    setSelectedTicket(null);
+  };
+
+  if (loading) {
+    return (
       <>
-    <Snackbar
-      open={snackbarOpen}
-      onClose={handleSnackbarClose}
-      anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-    >
-      <Alert onClose={handleSnackbarClose} severity="info" sx={{ width: '100%' }}>
-        Loading
-      </Alert>
-    </Snackbar>
+        <Snackbar
+          open={snackbarOpen}
+          onClose={handleSnackbarClose}
+          anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+        >
+          <Alert onClose={handleSnackbarClose} severity="info" sx={{ width: '100%' }}>
+            Loading
+          </Alert>
+        </Snackbar>
       </>
-    )
+    );
   }
 
   if (error) return <div>{error}</div>;
@@ -134,6 +154,7 @@ const Ticket = () => {
           </FormControl>
         </Box>
       </Box>
+
       <Paper elevation={3} className="mt-4">
         <TableContainer>
           <Table>
@@ -149,13 +170,15 @@ const Ticket = () => {
             </TableHead>
             <TableBody>
               {filteredTickets.length > 0 ? (
-                filteredTickets.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((ticket) => (
-                  <TableRow key={ticket.id}>
-                    <TableCell>{ticket.id}</TableCell>
+                filteredTickets.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((ticket,index) => (
+                  <TableRow key={ticket.id} onClick={() => handleOpenDialog(ticket)} style={{ cursor: 'pointer' }}>
+                    <TableCell>{index+1}</TableCell>
                     <TableCell>{ticket.email}</TableCell>
                     <TableCell>{ticket.title}</TableCell>
-                    <TableCell>{ticket.description}</TableCell>
                     <TableCell>
+                      {ticket.description.split(' ').slice(0, 5).join(' ')}
+                      {ticket.description.split(' ').length > 5 && '...'}
+                    </TableCell>  <TableCell>
                       <span style={{ fontWeight: 'bold', color: ticket.status === 'OPEN' ? 'red' : 'green' }}>
                         {ticket.status}
                       </span>
@@ -174,6 +197,7 @@ const Ticket = () => {
           </Table>
         </TableContainer>
       </Paper>
+
       <TablePagination
         rowsPerPageOptions={[10]}
         component="div"
@@ -183,6 +207,28 @@ const Ticket = () => {
         onPageChange={handleChangePage}
         onRowsPerPageChange={handleChangeRowsPerPage}
       />
+
+      {/* Dialog for displaying ticket details */}
+      {selectedTicket && (
+        <Dialog open={openDialog} onClose={handleCloseDialog}>
+          <DialogTitle>Ticket Details</DialogTitle>
+          <DialogContent>
+            <Box>
+              <p><strong>ID:</strong> {selectedTicket.id}</p>
+              <p><strong>Email:</strong> {selectedTicket.email}</p>
+              <p><strong>Title:</strong> {selectedTicket.title}</p>
+              <p><strong>Description:</strong> {selectedTicket.description}</p>
+              <p><strong>Status:</strong> {selectedTicket.status}</p>
+              <p><strong>Priority:</strong> {selectedTicket.priority}</p>
+            </Box>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCloseDialog} color="primary">
+              Close
+            </Button>
+          </DialogActions>
+        </Dialog>
+      )}
     </div>
   );
 };

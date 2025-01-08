@@ -13,10 +13,11 @@ import {
   TextField,
   Select,
   MenuItem,
+  Alert,
   Box,
   FormControl,
   InputLabel,
-  CircularProgress,
+  Snackbar,
 } from '@mui/material';
 
 const LeaveRequest = () => {
@@ -32,31 +33,35 @@ const LeaveRequest = () => {
   const [statusFilter, setStatusFilter] = useState('');
 
   useEffect(() => {
-    const fetchLeaveRequests = async () => {
-      const adminEmail = localStorage.getItem('email');
-      const token = localStorage.getItem('token');
+  const fetchLeaveRequests = async () => {
+    const adminEmail = localStorage.getItem('email');
+    const token = localStorage.getItem('token');
 
-      try {
-        const response = await axios.get(
-          'https://work-sync-gbf0h9d5amcxhwcr.canadacentral-01.azurewebsites.net/admin/api/leaves/pending',
-          {
-            params: { adminEmail },
-            headers: { Authorization: token },
-          }
-        );
+    try {
+      setLoading(true);
+      setSnackbarOpen(true); 
+      const response = await axios.get(
+        'https://work-sync-gbf0h9d5amcxhwcr.canadacentral-01.azurewebsites.net/admin/api/leaves/pending',
+        {
+          params: { adminEmail },
+          headers: { Authorization: token },
+        }
+      );
 
-        // Filter data where role === 'SUBADMIN'
-        const subAdminData = response.data.filter((item) => item.role === 'SUBADMIN');
-        setLeaveData(subAdminData);
-      } catch (err) {
-        setError('Failed to fetch leave requests. Please try again later.');
-      } finally {
-        setLoading(false);
-      }
-    };
+      // Filter data where role === 'SUBADMIN'
+      const subAdminData = response.data.filter((item) => item.role === 'SUBADMIN');
+      setLeaveData(subAdminData);
+    } catch (error) {
+      setError('Failed to fetch leave requests. Please try again later.',error);
+    } finally {
+      setLoading(false);
+      setSnackbarOpen(false);
+    }
+  };
 
-    fetchLeaveRequests();
-  }, []);
+  fetchLeaveRequests();
+}, []);
+
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -98,13 +103,25 @@ const LeaveRequest = () => {
 
   const currentPageData = filteredData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
-  if (loading) {
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-        <CircularProgress />
-      </div>
-    );
-  }
+   const [snackbarOpen, setSnackbarOpen] = useState(false);
+    const handleSnackbarClose = () => {
+      setSnackbarOpen(false);
+    };
+    if(loading){
+      return(
+        <>
+      <Snackbar
+        open={snackbarOpen}
+        onClose={handleSnackbarClose}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <Alert onClose={handleSnackbarClose} severity="info" sx={{ width: '100%' }}>
+          Loading
+        </Alert>
+      </Snackbar>
+        </>
+      )
+    }
 
   if (error) {
     return (
@@ -179,9 +196,9 @@ const LeaveRequest = () => {
                   </TableCell>
                 </TableRow>
               ) : (
-                currentPageData.map((leave) => (
+                currentPageData.map((leave,index) => (
                   <TableRow key={leave.id}>
-                    <TableCell>{leave.id}</TableCell>
+                    <TableCell>{index+1}</TableCell>
                     <TableCell>{leave.name}</TableCell>
                     <TableCell>{leave.email}</TableCell>
                     <TableCell>{leave.leaveType}</TableCell>
@@ -197,8 +214,8 @@ const LeaveRequest = () => {
                           <MenuItem value="" disabled>
                             Select Action
                           </MenuItem>
-                          <MenuItem value="Approved">Approve</MenuItem>
-                          <MenuItem value="Rejected">Reject</MenuItem>
+                          <MenuItem value="APPROVED">Approve</MenuItem>
+                          <MenuItem value="REJECTED">Reject</MenuItem>
                         </Select>
                       </FormControl>
                     </TableCell>

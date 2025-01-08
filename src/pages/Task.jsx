@@ -134,23 +134,23 @@ const Task = () => {
         <TableContainer>
           <Table>
             <TableHead>
-              <TableRow>
-                <TableCell>ID</TableCell>
-                <TableCell>Assigned By</TableCell>
-                <TableCell>Assigned To</TableCell>
-                <TableCell>Title</TableCell>
-                <TableCell>Description</TableCell>
-                <TableCell>Deadline</TableCell>
-                <TableCell>Status</TableCell>
+              <TableRow style={{ backgroundColor: '#f0f0f0' }}>
+                <TableCell style={{ fontWeight: 'bold' }}>ID</TableCell>
+                <TableCell style={{ fontWeight: 'bold' }}>Assigned By</TableCell>
+                <TableCell style={{ fontWeight: 'bold' }}>Assigned To</TableCell>
+                <TableCell style={{ fontWeight: 'bold' }}>Title</TableCell>
+                <TableCell style={{ fontWeight: 'bold' }}>Description</TableCell>
+                <TableCell style={{ fontWeight: 'bold' }}>Deadline</TableCell>
+                <TableCell style={{ fontWeight: 'bold' }}>Status</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {filteredTasks.length > 0 ? (
                 filteredTasks
                   .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                  .map((task) => (
+                  .map((task,index) => (
                     <TableRow key={task.id} onClick={() => handleRowClick(task)} style={{ cursor: 'pointer' }}>
-                      <TableCell>{task.id}</TableCell>
+                      <TableCell>{index+1}</TableCell>
                       <TableCell>{task.assignedBy}</TableCell>
                       <TableCell>{task.assignedTo}</TableCell>
                       <TableCell>{task.title}</TableCell>

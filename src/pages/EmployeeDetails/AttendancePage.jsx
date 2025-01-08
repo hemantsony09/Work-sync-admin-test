@@ -180,7 +180,7 @@ const AttendancePage = () => {
                 ) : (
                   filteredAttendance.map((attendance, index) => (
                     <TableRow key={index}>
-                      <TableCell>{attendance.id || index + 1}</TableCell>
+                      <TableCell>{ index + 1}</TableCell>
                       <TableCell>{attendance.name}</TableCell>
                       <TableCell>{formatDate(attendance.date)}</TableCell>
                       <TableCell>{formatTime(attendance.punchInTime)}</TableCell>

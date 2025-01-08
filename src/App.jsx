@@ -17,6 +17,7 @@ import SubAdminLeave from './pages/SubAdminDetails/SubAdminLeave';
 import AnnouncementForm from './pages/AnnouncementForm';
 import LeaveRequest from './pages/LeaveRequest';
 import NotFound from './pages/NotFound'; 
+import ForgotPassword from './pages/Login/ForgotPassword';
 
 // PrivateRoute component for protecting routes
 const PrivateRoute = ({ children }) => {
@@ -47,12 +48,13 @@ class ErrorBoundary extends React.Component {
   }
 }
 
+
 // Main AppContent component
 const AppContent = () => {
   const location = useLocation();
 
   // Paths where the sidebar should not be displayed
-  const noSidebarPaths = ['/admin/login', '/admin/register'];
+  const noSidebarPaths = ['/admin/login', '/admin/register','/admin/login/forgot','/admin/login/', '/admin/register/','/admin/login/forgot/'];
   const showSidebar = !noSidebarPaths.includes(location.pathname);
 
   console.log('Rendering AppContent with path:', location.pathname);
@@ -89,6 +91,7 @@ const AppContent = () => {
         <Routes>
           {/* Public Routes */}
           <Route path="/admin/login" element={<Login />} />
+          <Route path="/admin/login/forgot" element={<ForgotPassword />} />
           <Route path="/admin/register" element={<Register />} />
 
           {/* Private Routes */}
@@ -140,6 +143,7 @@ const AppContent = () => {
             path="/admin/leave-request"
             element={<PrivateRoute><LeaveRequest /></PrivateRoute>}
           />
+       
 
           {/* 404 Route */}
           <Route path="*" element={<NotFound />} />

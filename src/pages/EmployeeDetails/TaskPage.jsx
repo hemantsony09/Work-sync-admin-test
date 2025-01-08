@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
+import axios from 'axios';
 import {
   Paper,
   Table,
@@ -12,13 +13,17 @@ import {
   TextField,
   Button,
   Box,
-  
   Snackbar,
   Alert,
   MenuItem,
   Select,
   FormControl,
   InputLabel,
+  TablePagination,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
 
 const TaskPage = () => {
@@ -30,13 +35,22 @@ const TaskPage = () => {
   const [taskStatusFilter, setTaskStatusFilter] = useState('');
   const [filteredTasks, setFilteredTasks] = useState([]);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+
+  // Pagination states
+  const [page, setPage] = useState(0);
+  const [rowsPerPage] = useState(10); // Fixed to 10 rows per page
+
+  // Dialog states
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedTask, setSelectedTask] = useState(null);
 
   useEffect(() => {
     const fetchTasks = async () => {
-      try {
-        
       setLoading(true);
-      setSnackbarOpen(true); 
+      setSnackbarOpen(true);
+      try {
         const adminEmail = localStorage.getItem('email');
         const token = localStorage.getItem('token');
 
@@ -46,25 +60,24 @@ const TaskPage = () => {
           return;
         }
 
-        const response = await fetch(
-          `https://work-sync-gbf0h9d5amcxhwcr.canadacentral-01.azurewebsites.net/admin/api/tasks/get/email?adminEmail=${adminEmail}&email=${employee.email}`,
+        const response = await axios.get(
+          `https://work-sync-gbf0h9d5amcxhwcr.canadacentral-01.azurewebsites.net/admin/api/tasks/givenTasks`,
           {
+            params: {
+              adminEmail: adminEmail,
+              assignedTo: employee.email,
+            },
             headers: {
               Authorization: token,
             },
           }
         );
 
-        if (!response.ok) {
-          throw new Error(`Failed to fetch tasks: ${response.statusText}`);
-        }
-
-        const data = await response.json();
-        setTaskData(data.tasks || []);
-        setFilteredTasks(data.tasks || []);
+        setTaskData(response.data || []);
+        setFilteredTasks(response.data || []);
       } catch (err) {
-        setError(err.message);
-      }  finally {
+        setError(`Failed to fetch tasks: ${err.message}`);
+      } finally {
         setLoading(false);
         setSnackbarOpen(false);
       }
@@ -75,13 +88,12 @@ const TaskPage = () => {
     }
   }, [employee]);
 
-  // Filter tasks dynamically when filters or taskData change
   useEffect(() => {
     let filtered = taskData;
 
     if (taskNameFilter) {
       filtered = filtered.filter((task) =>
-        task.task.toLowerCase().includes(taskNameFilter.toLowerCase())
+        task.title.toLowerCase().includes(taskNameFilter.toLowerCase())
       );
     }
 
@@ -92,42 +104,48 @@ const TaskPage = () => {
     setFilteredTasks(filtered);
   }, [taskData, taskNameFilter, taskStatusFilter]);
 
-  // Reset filters
   const handleReset = () => {
     setTaskNameFilter('');
     setTaskStatusFilter('');
     setFilteredTasks(taskData);
   };
 
-  if (!employee) {
-    return (
-      <Typography variant="h6" color="error" align="center">
-        Employee not found
-      </Typography>
-    );
-  }
-  const [loading, setLoading] = useState(false);
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
   const handleSnackbarClose = () => {
     setSnackbarOpen(false);
   };
 
-  if(loading){
-    return(
-      <>
-    <Snackbar
-      open={snackbarOpen}
-      onClose={handleSnackbarClose}
-      anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-    >
-      <Alert onClose={handleSnackbarClose} severity="info" sx={{ width: '100%' }}>
-        Loading
-      </Alert>
-    </Snackbar>
-      </>
-    )
-  }
+  const handleRowClick = (task) => {
+    setSelectedTask(task);
+    setDialogOpen(true);
+  };
 
+  const handleDialogClose = () => {
+    setDialogOpen(false);
+    setSelectedTask(null);
+  };
+
+  const truncateDescription = (description) => {
+    const words = description.split(' ');
+    return words.length > 5 ? `${words.slice(0, 5).join(' ')}...` : description;
+  };
+
+  if (loading) {
+    return (
+      <Snackbar
+        open={snackbarOpen}
+        onClose={handleSnackbarClose}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <Alert onClose={handleSnackbarClose} severity="info" sx={{ width: '100%' }}>
+          Loading
+        </Alert>
+      </Snackbar>
+    );
+  }
 
   if (error) {
     return (
@@ -140,11 +158,9 @@ const TaskPage = () => {
   return (
     <div className="p-6">
       <div className="flex items-center justify-between">
-        <div>
-          <Typography variant="h4" gutterBottom>
-            {employee.name}'s Task Details
-          </Typography>
-        </div>
+        <Typography variant="h4" gutterBottom>
+          {employee?.name}'s Task Details
+        </Typography>
         <div className="flex gap-4 py-4">
           <TextField
             label="Search by Task Name"
@@ -153,8 +169,6 @@ const TaskPage = () => {
             onChange={(e) => setTaskNameFilter(e.target.value)}
             sx={{ flex: 1 }}
           />
-
-          {/* Task Status Filter Dropdown */}
           <FormControl variant="outlined" sx={{ flex: 1, minWidth: 200 }}>
             <InputLabel>Status</InputLabel>
             <Select
@@ -168,8 +182,6 @@ const TaskPage = () => {
               <MenuItem value="Completed">Completed</MenuItem>
             </Select>
           </FormControl>
-
-          {/* Reset Button */}
           <Button
             variant="outlined"
             color="secondary"
@@ -181,41 +193,71 @@ const TaskPage = () => {
         </div>
       </div>
 
-      {/* Task Table */}
       <Paper>
         <TableContainer>
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell>Task ID</TableCell>
-                <TableCell>Name</TableCell>
-                <TableCell>Email</TableCell>
-                <TableCell>Task Description</TableCell>
+                <TableCell>ID</TableCell>
+                <TableCell>Assigned By</TableCell>
+                <TableCell>Title</TableCell>
+                <TableCell>Description</TableCell>
+                <TableCell>Assigned Date</TableCell>
+                <TableCell>Deadline</TableCell>
                 <TableCell>Status</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {filteredTasks.length > 0 ? (
-                filteredTasks.map((task) => (
-                  <TableRow key={task.id}>
-                    <TableCell>{task.id}</TableCell>
-                    <TableCell>{task.name}</TableCell>
-                    <TableCell>{task.email}</TableCell>
-                    <TableCell>{task.task}</TableCell>
-                    <TableCell>{task.status}</TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={5} align="center">
-                    No tasks match the filters.
-                  </TableCell>
+              {filteredTasks.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((task, index) => (
+                <TableRow key={task.id} onClick={() => handleRowClick(task)} style={{ cursor: 'pointer' }}>
+                  <TableCell>{index + 1 + page * rowsPerPage}</TableCell>
+                  <TableCell>{task.name}</TableCell>
+                  <TableCell>{task.title}</TableCell>
+                  <TableCell>{truncateDescription(task.description)}</TableCell>
+                  <TableCell>{new Date(task.createdAt).toLocaleString()}</TableCell>
+                  <TableCell>{task.deadLine}</TableCell>
+                  <TableCell>{task.status}</TableCell>
                 </TableRow>
-              )}
+              ))}
             </TableBody>
           </Table>
         </TableContainer>
       </Paper>
+      <TablePagination
+        rowsPerPageOptions={[10]}
+        component="div"
+        count={filteredTasks.length}
+        rowsPerPage={rowsPerPage}
+        page={page}
+        onPageChange={handleChangePage}
+      />
+
+      {/* Dialog */}
+      <Dialog open={dialogOpen} onClose={handleDialogClose}>
+        <DialogTitle>Task Details</DialogTitle>
+        <DialogContent>
+          {selectedTask && (
+            <>
+              <Typography variant="subtitle1">ID: {selectedTask.id}</Typography>
+              <Typography variant="subtitle1">Assigned By: {selectedTask.name}</Typography>
+              <Typography variant="subtitle1">Title: {selectedTask.title}</Typography>
+              <Typography variant="subtitle1">
+                Description: {truncateDescription(selectedTask.description)}
+              </Typography>
+              <Typography variant="subtitle1">
+                Assigned Date: {new Date(selectedTask.createdAt).toLocaleString()}
+              </Typography>
+              <Typography variant="subtitle1">Deadline: {selectedTask.deadLine}</Typography>
+              <Typography variant="subtitle1">Status: {selectedTask.status}</Typography>
+            </>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleDialogClose} color="primary">
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 };

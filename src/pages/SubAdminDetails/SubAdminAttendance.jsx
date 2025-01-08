@@ -163,7 +163,7 @@ const SubAdminAttendance = () => {
                 ) : (
                   currentPageData.map((attendance, index) => (
                     <TableRow key={attendance.id || index}>
-                      <TableCell>{attendance.id || index + 1}</TableCell>
+                      <TableCell>{ index + 1}</TableCell>
                       <TableCell>{attendance.name}</TableCell>
                       <TableCell>{formatDate(attendance.date)}</TableCell>
                       <TableCell>{formatTime(attendance.punchInTime)}</TableCell>
